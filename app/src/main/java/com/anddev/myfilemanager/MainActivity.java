@@ -5,17 +5,22 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import android.Manifest;
 import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.StrictMode;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.View;
@@ -57,6 +62,12 @@ public class MainActivity extends AppCompatActivity {
 
     ImageView fileIv ;
 
+    ArrayList<Uri> selectedFilesUri;
+
+
+    Intent intent;
+
+    ImageButton back;
 
 
 
@@ -85,6 +96,12 @@ public class MainActivity extends AppCompatActivity {
 
         others = findViewById(R.id.others);
 
+        back = findViewById(R.id.back);
+
+        selectedFilesUri = new ArrayList<>();
+
+
+
         others.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -94,6 +111,13 @@ public class MainActivity extends AppCompatActivity {
                 i.addCategory(Intent.CATEGORY_OPENABLE);
                 startActivityForResult(i, 10);
 
+            }
+        });
+
+        back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this,GotData.class));
             }
         });
 
@@ -282,7 +306,7 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-        if(files.length == 0 && whatsappFiles.length == 0)
+        if(files != null && whatsappFiles != null)
             noFileRl.setVisibility(View.VISIBLE);
         else
         {
@@ -294,24 +318,50 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
 
 
-                if(files.length != 0){
+                if(files != null){
 
                     SparseBooleanArray spD = fileLV.getCheckedItemPositions();
                     for(int i =0;i<spD.size();i++)
                     {
+                        Uri uri = FileProvider.getUriForFile(
+                                getApplicationContext(),
+                                getApplicationContext().getPackageName() + ".provider",
+                                arrayList.get(spD.keyAt(i))
+                        );
+                        selectedFilesUri.add(uri);
                         Log.d("name", arrayList.get(spD.keyAt(i)).getName());
                     }
 
                 }
 
 
-                if(whatsappFiles.length != 0) {
+                if(whatsappFiles != null) {
 
                     SparseBooleanArray spW = WFilesLV.getCheckedItemPositions();
                     for (int i = 0; i < spW.size(); i++) {
+                        Uri uri = FileProvider.getUriForFile(
+                                getApplicationContext(),
+                                getApplicationContext().getPackageName() + ".provider",
+                                WhatsAppArray.get(spW.keyAt(i))
+                        );
+                        selectedFilesUri.add(uri);
                         Log.d("name", WhatsAppArray.get(spW.keyAt(i)).getName());
                     }
                 }
+
+                if(selectedFilesUri.size() != 0) {
+
+                    for (Uri u : selectedFilesUri) {
+                        Log.d("Uri selected: ", "" + u);
+                    }
+                }
+
+                intent = getIntent();
+                Bundle bundle = new Bundle();
+                bundle.putParcelableArrayList("abc",selectedFilesUri);
+                intent.putExtras(bundle);
+                setResult(10,intent);
+                finish();
 
 
 
@@ -322,6 +372,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
     }
+
+
 
 
 
